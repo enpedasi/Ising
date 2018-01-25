@@ -4,10 +4,10 @@ defmodule Ising do
 
   Iex > Ising.main()
   """
-  defp get_state(agent_array, idx ) do
+  defp get_state(agent_array, idx) do
     agent_array
     |> Map.get(idx)
-    |> Agent.get(fn val -> val end)
+    |> Agent.get(fn state -> state end)
   end
 
   def ising2d_sum_of_adjacent_spins(s, m, n, i, j) do
@@ -53,7 +53,7 @@ defmodule Ising do
     n = 100
     #  generate following map
     #
-    #  %{ { {0, 0} , pid }, { {0,1} , pid }, ...  }
+    #  %{ { {0, 0} , pid }, { {0, 1} , pid }, ...  }
     s = 0..n - 1
         |> Enum.flat_map( fn x -> 0..n - 1
         |> Enum.map( fn y -> { {x, y} ,
@@ -63,6 +63,9 @@ defmodule Ising do
 
     beta = :math.log(1 + :math.sqrt(2.0)) / 2
     :timer.tc(fn -> ising2d_sweep(s, beta, round(1.0e+08)) end)
+
+    # stop the agents
+    Enum.map(s, fn {_ , pid} -> Agent.stop(pid) end)
   end  
 end
 
