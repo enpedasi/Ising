@@ -2,12 +2,21 @@ defmodule Ising do
   @moduledoc """
   Documentation for Ising.
 
+  assign 1 Agent to 1 Spin
+
   Iex > Ising.main()
   """
   defp get_state(agent_array, idx) do
-    agent_array
-    |> Map.get(idx)
-    |> Agent.get(fn state -> state end)
+     %{^idx => pid} = agent_array
+     Agent.get(pid, fn state -> state end)
+
+#    agent_array
+#    |> Map.get(idx)
+#    |> Agent.get(fn state -> state end)
+  end
+  defp get_pid(agent_array, idx) do
+     %{^idx => pid} = agent_array
+     pid
   end
 
   def ising2d_sum_of_adjacent_spins(s, m, n, i, j) do
@@ -30,25 +39,36 @@ defmodule Ising do
                        1, -2*beta*  2 , -2*beta*  3 , -2*beta*4  ]
     iteration = round(niter/((m+1)*(n+1)))
     # IO.inspect iteration
-    for iter <- 0..(iteration - 1 ) do
-      for i <- 0..m , j <- 0..n do 
-        agent_ary
-           |> Map.get({i, j})
-           |> Agent.get_and_update(
+    Enum.reduce(0..iteration, nil, fn l, _acc ->
+    Enum.reduce(0..(m-1), nil,
+      fn i, _acc -> 
+        Enum.reduce(0..(n-1), nil, 
+          fn j, _bcc ->
+             get_pid(agent_ary, {i,j})
+             |> Agent.get_and_update(
                 fn s1 ->
                     {s1,
                       case :rand.uniform < 
                             Enum.at(prob, round(s1) * ising2d_sum_of_adjacent_spins(agent_ary, m, n, i , j) +4) do 
                         true -> - s1
                         _    ->   s1
-                      end}
-                end)
-      end
-    end
+                       end
+                      }
+                end
+                )
+            nil
+          end) 
+          nil
+       end)    
+          IO.inspect ["Enum.reduce  loop", l ]
+    end)
   end
 
-  defp ok( {:ok, pid} = agent), do: pid
-
+  defp ok( {:ok, pid} = _agent), do: pid
+  def sum_agents(agents) do
+    # test
+    Enum.reduce( agents, 0, fn {_, pid}, acc -> Agent.get(pid, fn state -> state end)+acc end)  
+  end
   def main do
     n = 100
     #  generate following map
@@ -61,11 +81,17 @@ defmodule Ising do
                       end ) end )
         |> Enum.into(%{})
 
-    beta = :math.log(1 + :math.sqrt(2.0)) / 2
-    :timer.tc(fn -> ising2d_sweep(s, beta, round(1.0e+08)) end)
-
+    beta    = :math.log(1 + :math.sqrt(2.0)) / 2
+    
+    IO.inspect ["Agents Ready", Enum.count(s) ]
+    
+    {elapsed, result} = :timer.tc(fn -> ising2d_sweep(s, beta, round(1.0e+09)) end)
+    
+    # elapsed = :timer.tc(fn -> sum_agents(s) end)
+    
     # stop the agents
     Enum.map(s, fn {_ , pid} -> Agent.stop(pid) end)
+    {elapsed/1_000_000, result}
   end  
 end
 
