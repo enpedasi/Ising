@@ -9,10 +9,6 @@ defmodule Ising do
   defp get_state(agent_array, idx) do
      %{^idx => pid} = agent_array
      Agent.get(pid, fn state -> state end)
-
-#    agent_array
-#    |> Map.get(idx)
-#    |> Agent.get(fn state -> state end)
   end
   defp get_pid(agent_array, idx) do
      %{^idx => pid} = agent_array
@@ -39,15 +35,18 @@ defmodule Ising do
                        1, -2*beta*  2 , -2*beta*  3 , -2*beta*4  ]
     iteration = round(niter/((m+1)*(n+1)))
     # IO.inspect iteration
+    iteration = 10 # for test
     Enum.reduce(0..iteration, nil, fn l, _acc ->
     Enum.reduce(0..(m-1), nil,
       fn i, _acc -> 
-        Enum.reduce(0..(n-1), nil, 
-          fn j, _bcc ->
+        Enum.map(0..(n-1), 
+          fn j ->
+            # IO.inspect ["async start", j ]
+            Task.async( fn ->
              get_pid(agent_ary, {i,j})
              |> Agent.get_and_update(
                 fn s1 ->
-                    {s1,
+                    {s1, s1
                       case :rand.uniform < 
                             Enum.at(prob, round(s1) * ising2d_sum_of_adjacent_spins(agent_ary, m, n, i , j) +4) do 
                         true -> - s1
@@ -56,9 +55,10 @@ defmodule Ising do
                       }
                 end
                 )
-            nil
+            end)
           end) 
-          nil
+        |> Enum.map(&Task.await(&1))
+        nil
        end)    
           IO.inspect ["Enum.reduce  loop", l ]
     end)
