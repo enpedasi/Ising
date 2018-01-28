@@ -33,6 +33,7 @@ defmodule Ising do
     # IO.inspect [Integer.to_string(m), n]
     prob = [-2*beta*(-4), -2*beta*(-3), -2*beta*(-2), -2*beta*(-1),
                        1, -2*beta*  2 , -2*beta*  3 , -2*beta*4  ]
+           |> Enum.map(&:math.exp(&1))
     iteration = round(niter/((m+1)*(n+1)))
     # IO.inspect iteration
     iteration = 10 # for test
