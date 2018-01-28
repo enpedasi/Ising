@@ -46,7 +46,7 @@ defmodule Ising do
              get_pid(agent_ary, {i,j})
              |> Agent.get_and_update(
                 fn s1 ->
-                    {s1, s1
+                    {s1, 
                       case :rand.uniform < 
                             Enum.at(prob, round(s1) * ising2d_sum_of_adjacent_spins(agent_ary, m, n, i , j) +4) do 
                         true -> - s1
